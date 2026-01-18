@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Card,
   CardContent,
   Container,
@@ -7,8 +8,11 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 function WorkOrderDetail() {
+  const navigate = useNavigate();
+
   return (
     <>
       {" "}
@@ -30,7 +34,6 @@ function WorkOrderDetail() {
                   </Typography>
                   <TextField fullWidth placeholder="例如：宿舍灯坏了" />
                 </Box>
-
                 <Box>
                   <Typography
                     variant="subtitle2"
@@ -45,7 +48,6 @@ function WorkOrderDetail() {
                     minRows={4}
                   />
                 </Box>
-
                 <Box>
                   <Typography
                     variant="subtitle2"
@@ -54,7 +56,6 @@ function WorkOrderDetail() {
                     图片
                   </Typography>
                 </Box>
-
                 {/* {images.length > 0 && (
               <Box>
                 <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
@@ -106,6 +107,15 @@ function WorkOrderDetail() {
                 </ImageList>
               </Box>
             )} */}
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  size="large"
+                  sx={{ borderRadius: 2 }}
+                  onClick={() => navigate("/user")}
+                >
+                  返回
+                </Button>
               </Stack>
             </CardContent>
           </Card>

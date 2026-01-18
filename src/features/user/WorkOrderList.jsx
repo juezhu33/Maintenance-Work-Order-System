@@ -115,7 +115,7 @@ export default function WorkOrderList() {
           zIndex: (theme) => theme.zIndex.drawer + 1,
         }}
         onClick={() => {
-          navigate("/add");
+          navigate("add");
         }}
       >
         <AddIcon />

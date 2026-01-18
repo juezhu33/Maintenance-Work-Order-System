@@ -15,9 +15,34 @@ import {
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import { useState } from "react";
+import supabase from "../../utils/supabase";
+import apiLogin from "../../services/apiLogin";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-  const [showPassword, setShowPassword] = React.useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+  const [account, setAccount] = useState("");
+  const [password, setPassword] = useState("");
+
+  async function handleLogin() {
+    const { data, error, role } = await apiLogin(account, password);
+    if (error) {
+      console.error("登录失败：", error.message);
+      return;
+    }
+    console.log("登录成功，用户角色：", role);
+    if (role === "user") {
+      navigate("/user");
+    }
+    if (role === "admin") {
+      navigate("/admin");
+    }
+    if (role === "mechanic") {
+      navigate("/mechanic");
+    }
+  }
 
   return (
     <>
@@ -40,6 +65,7 @@ export default function Login() {
             width: "100%",
             maxWidth: 420,
             borderRadius: 4,
+            transform: "translateY(-55px)",
           }}
         >
           <CardContent sx={{ p: 3 }}>
@@ -79,31 +105,18 @@ export default function Login() {
                 placeholder="学号 / 工号 / 邮箱"
                 autoComplete="username"
                 fullWidth
+                value={account}
+                onChange={(e) => setAccount(e.target.value)}
               />
 
               <TextField
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 label="密码"
                 placeholder="请输入密码"
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 fullWidth
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        edge="end"
-                        aria-label="toggle password visibility"
-                        onClick={() => setShowPassword((v) => !v)}
-                      >
-                        {showPassword ? (
-                          <VisibilityOffOutlinedIcon />
-                        ) : (
-                          <VisibilityOutlinedIcon />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
               />
 
               <Box
@@ -124,7 +137,7 @@ export default function Login() {
                   variant="text"
                   sx={{ textTransform: "none" }}
                 >
-                  忘记密码
+                  ?忘记密码
                 </Button>
               </Box>
 
@@ -133,7 +146,9 @@ export default function Login() {
                 size="large"
                 fullWidth
                 sx={{ borderRadius: 2 }}
-                onClick={() => {}}
+                onClick={() => {
+                  handleLogin();
+                }}
               >
                 登录
               </Button>

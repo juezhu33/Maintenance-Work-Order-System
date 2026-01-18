@@ -8,13 +8,13 @@ export default function UserNavBar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
-  const value = pathname.startsWith("/add") ? 1 : 0;
+  const value = pathname.startsWith("/user/add") ? 1 : 0;
 
   return (
     <Box sx={{ width: "100%" }}>
       <Tabs
         value={value}
-        onChange={(e, newValue) => navigate(newValue === 1 ? "/add" : "/user")}
+        onChange={(e, newValue) => navigate(newValue === 1 ? "add" : "/user")}
         centered
       >
         <Tab label="主页" />

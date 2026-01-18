@@ -6,7 +6,7 @@ function WorkOrderItem({ primary, secondary }) {
   const navigate = useNavigate();
 
   return (
-    <ListItemButton onClick={() => navigate(`/detail/${primary}`)}>
+    <ListItemButton onClick={() => navigate(`detail/${primary}`)}>
       <ListItemText primary={primary} secondary={secondary} />
     </ListItemButton>
   );
