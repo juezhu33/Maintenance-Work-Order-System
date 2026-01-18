@@ -15,7 +15,6 @@ function WorkOrderDetail() {
 
   return (
     <>
-      {" "}
       <Box sx={{ minHeight: "100dvh", bgcolor: "background.default", py: 3 }}>
         <Container maxWidth="sm">
           <Card variant="outlined" sx={{ borderRadius: 4, overflow: "hidden" }}>

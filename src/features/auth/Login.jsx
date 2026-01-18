@@ -1,4 +1,3 @@
-import * as React from "react";
 import {
   Box,
   Button,
@@ -7,27 +6,22 @@ import {
   Checkbox,
   CssBaseline,
   FormControlLabel,
-  IconButton,
-  InputAdornment,
   TextField,
   Typography,
 } from "@mui/material";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
-import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useState } from "react";
-import supabase from "../../utils/supabase";
 import apiLogin from "../../services/apiLogin";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
-  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
 
   async function handleLogin() {
     const { data, error, role } = await apiLogin(account, password);
+
     if (error) {
       console.error("登录失败：", error.message);
       return;
@@ -35,12 +29,15 @@ export default function Login() {
     console.log("登录成功，用户角色：", role);
     if (role === "user") {
       navigate("/user");
+      return;
     }
     if (role === "admin") {
       navigate("/admin");
+      return;
     }
     if (role === "mechanic") {
       navigate("/mechanic");
+      return;
     }
   }
 
@@ -114,7 +111,7 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 label="密码"
                 placeholder="请输入密码"
-                type={showPassword ? "text" : "password"}
+                type="password"
                 autoComplete="current-password"
                 fullWidth
               />
