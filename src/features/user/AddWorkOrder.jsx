@@ -243,7 +243,7 @@ export default function TicketSubmitPage() {
                 variant="contained"
                 size="large"
                 sx={{ borderRadius: 2 }}
-                onClick={() => {}}
+                onClick={() => navigate("/user")}
               >
                 提交
               </Button>
