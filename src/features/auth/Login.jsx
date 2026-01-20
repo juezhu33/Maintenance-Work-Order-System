@@ -117,7 +117,7 @@ export default function Login() {
               />
 
               {/* 记住我和忘记密码 */}
-              {/* <Box
+              <Box
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -137,7 +137,7 @@ export default function Login() {
                 >
                   ?忘记密码
                 </Button>
-              </Box> */}
+              </Box>
 
               <Button
                 variant="contained"
@@ -152,7 +152,7 @@ export default function Login() {
               </Button>
 
               {/* 注册 */}
-              {/* <Typography
+              <Typography
                 variant="body2"
                 sx={{ textAlign: "center", opacity: 0.75 }}
               >
@@ -164,7 +164,7 @@ export default function Login() {
                 >
                   去注册
                 </Button>
-              </Typography> */}
+              </Typography>
             </Box>
           </CardContent>
         </Card>
