@@ -19,7 +19,7 @@ export default async function apiLogin(account, password) {
     .single();
 
   const role = profileError ? null : profileData.role;
-
+  console.log(profileData);
   return {
     data: authData,
     error: profileError || authError,

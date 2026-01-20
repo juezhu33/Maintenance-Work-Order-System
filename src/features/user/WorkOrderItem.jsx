@@ -2,11 +2,11 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import { useNavigate } from "react-router-dom";
 
-function WorkOrderItem({ primary, secondary }) {
+function WorkOrderItem({ id, primary, secondary }) {
   const navigate = useNavigate();
 
   return (
-    <ListItemButton onClick={() => navigate(`detail/${primary}`)}>
+    <ListItemButton onClick={() => navigate(`/user/detail/${id}`)}>
       <ListItemText primary={primary} secondary={secondary} />
     </ListItemButton>
   );

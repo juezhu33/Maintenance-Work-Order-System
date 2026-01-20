@@ -1,127 +1,128 @@
+import * as React from "react";
 import {
   Box,
-  Button,
-  Card,
-  CardContent,
-  Container,
+  Chip,
+  Divider,
+  IconButton,
+  Paper,
   Stack,
-  TextField,
   Typography,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import { useNavigate, useParams } from "react-router-dom";
 
-function WorkOrderDetail() {
-  const navigate = useNavigate();
+export default function WorkOrderDetail() {
+  const nav = useNavigate();
+  const { id } = useParams();
+
+  const demo = {
+    id,
+    title: "宿舍灯坏了",
+    status: "in_progress",
+    location: "1号楼 402",
+    createdAt: "2026-01-20 10:21",
+    updatedAt: "2026-01-20 12:05",
+    desc: "突然不亮，可能灯管坏了。",
+  };
+
+  const statusChip =
+    demo.status === "open" ? (
+      <Chip size="small" label="待处理" />
+    ) : demo.status === "in_progress" ? (
+      <Chip size="small" label="处理中" color="warning" />
+    ) : (
+      <Chip size="small" label="已完成" color="success" />
+    );
 
   return (
-    <>
-      <Box sx={{ minHeight: "100dvh", bgcolor: "background.default", py: 3 }}>
-        <Container maxWidth="sm">
-          <Card variant="outlined" sx={{ borderRadius: 4, overflow: "hidden" }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                工单详情
-              </Typography>
+    <Box>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+        <IconButton onClick={() => nav(-1)} size="small" aria-label="back">
+          <ArrowBackIosNewIcon fontSize="small" />
+        </IconButton>
+        <Typography sx={{ fontWeight: 900, fontSize: 18 }}>工单详情</Typography>
+      </Stack>
 
-              <Stack spacing={2.25}>
-                <Box>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ mb: 1, fontWeight: 700 }}
-                  >
-                    问题标题
-                  </Typography>
-                  <TextField fullWidth placeholder="例如：宿舍灯坏了" />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ mb: 1, fontWeight: 700 }}
-                  >
-                    详细描述
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    placeholder="尽量写清楚：地点/现象/是否有异味/是否漏水等"
-                    multiline
-                    minRows={4}
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ mb: 1, fontWeight: 700 }}
-                  >
-                    图片
-                  </Typography>
-                </Box>
-                {/* {images.length > 0 && (
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1 }}>
-                  图片预览（{count}）
-                </Typography>
+      <Paper variant="outlined" sx={{ borderRadius: 3, p: 1.5 }}>
+        <Stack spacing={1}>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="center"
+            spacing={1}
+          >
+            <Typography sx={{ fontWeight: 900 }} noWrap>
+              {demo.title}
+            </Typography>
+            {statusChip}
+          </Stack>
 
-                <ImageList cols={3} gap={12} sx={{ m: 0 }}>
-                  {images.map((img, idx) => (
-                    <ImageListItem
-                      key={img.id}
-                      sx={{
-                        position: "relative",
-                        borderRadius: 2,
-                        overflow: "hidden",
-                        border: "1px solid",
-                        borderColor: "divider",
-                      }}
-                    >
-                      <Box
-                        component="img"
-                        src={img.url}
-                        alt={`upload-${idx}`}
-                        sx={{
-                          width: "100%",
-                          height: "100%",
-                          aspectRatio: "1 / 1",
-                          objectFit: "cover",
-                          display: "block",
-                        }}
-                      />
+          <Typography variant="body2" sx={{ opacity: 0.8 }}>
+            {demo.location}
+          </Typography>
 
-                      <IconButton
-                        size="small"
-                        onClick={() => removeImage(idx)}
-                        sx={{
-                          position: "absolute",
-                          top: 6,
-                          right: 6,
-                          bgcolor: "rgba(0,0,0,0.55)",
-                          color: "white",
-                          "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
-                        }}
-                        aria-label="remove"
-                      >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
-                    </ImageListItem>
-                  ))}
-                </ImageList>
-              </Box>
-            )} */}
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  size="large"
-                  sx={{ borderRadius: 2 }}
-                  onClick={() => navigate("/user")}
-                >
-                  返回
-                </Button>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Container>
-      </Box>
-    </>
+          <Divider />
+
+          <Typography variant="body2" sx={{ opacity: 0.85 }}>
+            {demo.desc}
+          </Typography>
+        </Stack>
+      </Paper>
+
+      <Paper variant="outlined" sx={{ borderRadius: 3, p: 1.5, mt: 1.5 }}>
+        <Typography sx={{ fontWeight: 900, mb: 1 }}>信息</Typography>
+        <Stack spacing={1}>
+          <Row label="工单编号" value={demo.id} />
+          <Row label="提交时间" value={demo.createdAt} />
+          <Row label="更新时间" value={demo.updatedAt} />
+        </Stack>
+
+        <Divider sx={{ my: 1.5 }} />
+
+        <Typography sx={{ fontWeight: 900, mb: 1 }}>图片</Typography>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 1,
+          }}
+        >
+          <Box
+            sx={{
+              aspectRatio: "1/1",
+              bgcolor: "action.hover",
+              borderRadius: 2,
+            }}
+          />
+          <Box
+            sx={{
+              aspectRatio: "1/1",
+              bgcolor: "action.hover",
+              borderRadius: 2,
+            }}
+          />
+          <Box
+            sx={{
+              aspectRatio: "1/1",
+              bgcolor: "action.hover",
+              borderRadius: 2,
+            }}
+          />
+        </Box>
+      </Paper>
+    </Box>
   );
 }
 
-export default WorkOrderDetail;
+function Row({ label, value }) {
+  return (
+    <Box sx={{ display: "flex", justifyContent: "space-between", gap: 2 }}>
+      <Typography variant="body2" sx={{ opacity: 0.7 }}>
+        {label}
+      </Typography>
+      <Typography variant="body2" sx={{ fontWeight: 700 }}>
+        {value}
+      </Typography>
+    </Box>
+  );
+}

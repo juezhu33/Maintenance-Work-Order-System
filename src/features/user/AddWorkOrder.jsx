@@ -1,59 +1,51 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import * as React from "react";
 import {
   Box,
   Button,
-  Card,
-  CardActions,
-  CardContent,
-  Container,
   Divider,
   IconButton,
   ImageList,
   ImageListItem,
+  Paper,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import CloseIcon from "@mui/icons-material/Close";
 import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import { useNavigate } from "react-router-dom";
 
-function pickFiles(fileList) {
+function pickImages(fileList) {
   if (!fileList || fileList.length === 0) return [];
   return Array.from(fileList).filter((f) => f && f.type?.startsWith("image/"));
 }
 
-export default function TicketSubmitPage() {
-  const [title, setTitle] = useState("");
-  const [desc, setDesc] = useState("");
+export default function AddWorkOrder() {
   const navigate = useNavigate();
 
-  // { file, url } 跟你现在的逻辑一样
-  const [images, setImages] = useState([]);
-  const imagesRef = useRef([]); // 用于统一清理 objectURL
+  const [title, setTitle] = React.useState("");
+  const [desc, setDesc] = React.useState("");
+  const [images, setImages] = React.useState([]);
 
-  const cameraInputRef = useRef(null);
-  const fileInputRef = useRef(null);
+  const cameraInputRef = React.useRef(null);
+  const fileInputRef = React.useRef(null);
+  const imagesRef = React.useRef([]);
 
-  const count = useMemo(() => images.length, [images.length]);
-
-  function openCameraPicker() {
+  function openCamera() {
     cameraInputRef.current?.click();
   }
-
-  function openFilePicker() {
+  function openFiles() {
     fileInputRef.current?.click();
   }
 
   function addFiles(fileList) {
-    const files = pickFiles(fileList);
+    const files = pickImages(fileList);
     if (files.length === 0) return;
 
     const newItems = files.map((file) => ({
-      id: `${file.name}-${file.size}-${file.lastModified}-${
-        crypto.randomUUID?.() ?? Math.random()
-      }`,
+      id: `${file.name}-${file.size}-${file.lastModified}-${Math.random()}`,
       file,
       url: URL.createObjectURL(file),
     }));
@@ -65,13 +57,11 @@ export default function TicketSubmitPage() {
     });
   }
 
-  function handleCameraChange(e) {
+  function onCameraChange(e) {
     addFiles(e.target.files);
-    // 关键：清空 value，避免同一张图重复选择不触发 change
     e.target.value = "";
   }
-
-  function handleFileChange(e) {
+  function onFileChange(e) {
     addFiles(e.target.files);
     e.target.value = "";
   }
@@ -80,15 +70,13 @@ export default function TicketSubmitPage() {
     setImages((prev) => {
       const target = prev[idx];
       if (target?.url) URL.revokeObjectURL(target.url);
-
       const next = prev.filter((_, i) => i !== idx);
       imagesRef.current = next;
       return next;
     });
   }
 
-  // 卸载时统一清理
-  useEffect(() => {
+  React.useEffect(() => {
     return () => {
       for (const item of imagesRef.current) {
         if (item?.url) URL.revokeObjectURL(item.url);
@@ -96,170 +84,162 @@ export default function TicketSubmitPage() {
     };
   }, []);
 
+  function handleSubmit() {
+    // TODO: 你接 Supabase
+    // title, desc, images (File)
+  }
+
   return (
-    <Box sx={{ minHeight: "100dvh", bgcolor: "background.default", py: 3 }}>
-      <Container maxWidth="sm">
-        <Card variant="outlined" sx={{ borderRadius: 4, overflow: "hidden" }}>
-          <CardContent sx={{ p: 3 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-              提交维修工单
-            </Typography>
+    <Box>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+        <IconButton onClick={() => navigate(-1)} size="small" aria-label="back">
+          <ArrowBackIosNewIcon fontSize="small" />
+        </IconButton>
+        <Typography sx={{ fontWeight: 900, fontSize: 18 }}>
+          提交维修工单
+        </Typography>
+      </Stack>
 
-            <Stack spacing={2.25}>
-              <Box>
-                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
-                  问题标题
-                </Typography>
-                <TextField
-                  fullWidth
-                  placeholder="例如：宿舍灯坏了"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </Box>
+      <Paper variant="outlined" sx={{ borderRadius: 3, p: 1.5 }}>
+        <Stack spacing={2}>
+          <TextField
+            label="问题标题"
+            placeholder="一句话说明问题"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            fullWidth
+          />
 
-              <Box>
-                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
-                  详细描述
-                </Typography>
-                <TextField
-                  fullWidth
-                  placeholder="尽量写清楚：地点/现象/是否有异味/是否漏水等"
-                  value={desc}
-                  onChange={(e) => setDesc(e.target.value)}
-                  multiline
-                  minRows={4}
-                />
-              </Box>
-
-              <Box>
-                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700 }}>
-                  图片
-                </Typography>
-
-                <Stack direction="row" spacing={1.25}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<PhotoCameraOutlinedIcon />}
-                    onClick={openCameraPicker}
-                    sx={{ borderRadius: 2, px: 2 }}
-                  >
-                    拍照
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    startIcon={<UploadFileOutlinedIcon />}
-                    onClick={openFilePicker}
-                    sx={{ borderRadius: 2, px: 2 }}
-                  >
-                    上传
-                  </Button>
-                </Stack>
-
-                {/* 隐藏 input：拍照 */}
-                <input
-                  ref={cameraInputRef}
-                  type="file"
-                  accept="image/*"
-                  capture="environment"
-                  style={{ display: "none" }}
-                  onChange={handleCameraChange}
-                />
-
-                {/* 隐藏 input：上传 */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  style={{ display: "none" }}
-                  onChange={handleFileChange}
-                />
-              </Box>
-
-              {images.length > 0 && (
-                <Box>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ fontWeight: 700, mb: 1 }}
-                  >
-                    图片预览（{count}）
-                  </Typography>
-
-                  <ImageList cols={3} gap={12} sx={{ m: 0 }}>
-                    {images.map((img, idx) => (
-                      <ImageListItem
-                        key={img.id}
-                        sx={{
-                          position: "relative",
-                          borderRadius: 2,
-                          overflow: "hidden",
-                          border: "1px solid",
-                          borderColor: "divider",
-                        }}
-                      >
-                        <Box
-                          component="img"
-                          src={img.url}
-                          alt={`upload-${idx}`}
-                          sx={{
-                            width: "100%",
-                            height: "100%",
-                            aspectRatio: "1 / 1",
-                            objectFit: "cover",
-                            display: "block",
-                          }}
-                        />
-
-                        <IconButton
-                          size="small"
-                          onClick={() => removeImage(idx)}
-                          sx={{
-                            position: "absolute",
-                            top: 6,
-                            right: 6,
-                            bgcolor: "rgba(0,0,0,0.55)",
-                            color: "white",
-                            "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
-                          }}
-                          aria-label="remove"
-                        >
-                          <CloseIcon fontSize="small" />
-                        </IconButton>
-                      </ImageListItem>
-                    ))}
-                  </ImageList>
-                </Box>
-              )}
-            </Stack>
-          </CardContent>
+          <TextField
+            label="详细描述"
+            placeholder="补充说明，可选"
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            fullWidth
+            multiline
+            minRows={4}
+          />
 
           <Divider />
 
-          <CardActions sx={{ p: 2.5 }}>
-            <Stack direction="row" spacing={1.5} sx={{ width: "100%" }}>
+          <Stack spacing={1}>
+            <Typography sx={{ fontWeight: 800 }}>图片</Typography>
+            <Stack direction="row" spacing={1}>
               <Button
-                fullWidth
-                variant="contained"
-                size="large"
+                variant="outlined"
+                startIcon={<PhotoCameraOutlinedIcon />}
+                onClick={openCamera}
                 sx={{ borderRadius: 2 }}
-                onClick={() => navigate("/user")}
               >
-                提交
+                拍照
               </Button>
               <Button
-                fullWidth
                 variant="outlined"
-                size="large"
+                startIcon={<UploadFileOutlinedIcon />}
+                onClick={openFiles}
                 sx={{ borderRadius: 2 }}
-                onClick={() => navigate("/user")}
               >
-                返回
+                上传
               </Button>
             </Stack>
-          </CardActions>
-        </Card>
-      </Container>
+
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              style={{ display: "none" }}
+              onChange={onCameraChange}
+            />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              style={{ display: "none" }}
+              onChange={onFileChange}
+            />
+          </Stack>
+
+          {images.length > 0 && (
+            <Box>
+              <Typography sx={{ fontWeight: 800, mb: 1 }}>
+                图片预览（{images.length}）
+              </Typography>
+
+              <ImageList cols={3} gap={10} sx={{ m: 0 }}>
+                {images.map((img, idx) => (
+                  <ImageListItem
+                    key={img.id}
+                    sx={{
+                      position: "relative",
+                      borderRadius: 2,
+                      overflow: "hidden",
+                      border: "1px solid",
+                      borderColor: "divider",
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={img.url}
+                      alt={`upload-${idx}`}
+                      sx={{
+                        width: "100%",
+                        height: "100%",
+                        aspectRatio: "1/1",
+                        objectFit: "cover",
+                        display: "block",
+                      }}
+                    />
+                    <IconButton
+                      size="small"
+                      onClick={() => removeImage(idx)}
+                      sx={{
+                        position: "absolute",
+                        top: 6,
+                        right: 6,
+                        bgcolor: "rgba(0,0,0,0.55)",
+                        color: "white",
+                      }}
+                      aria-label="remove"
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </ImageListItem>
+                ))}
+              </ImageList>
+            </Box>
+          )}
+        </Stack>
+      </Paper>
+
+      {/* 底部提交栏 */}
+      <Box
+        sx={{
+          position: "fixed",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          bgcolor: "background.paper",
+          borderTop: "1px solid",
+          borderColor: "divider",
+          px: 1.5,
+          py: 1.25,
+        }}
+      >
+        <Button
+          fullWidth
+          variant="contained"
+          size="large"
+          sx={{ borderRadius: 2 }}
+          onClick={handleSubmit}
+        >
+          提交
+        </Button>
+      </Box>
+
+      {/* 给内容留出底部栏空间 */}
+      <Box sx={{ height: 72 }} />
     </Box>
   );
 }
