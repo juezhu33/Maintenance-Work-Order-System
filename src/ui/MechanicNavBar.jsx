@@ -1,45 +1,28 @@
 import Box from "@mui/material/Box";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
+import Divider from "@mui/material/Divider";
 import { useLocation, useNavigate } from "react-router-dom";
 
-export default function UserNavBar() {
+export default function MechanicNavBar() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
-  const value = pathname.startsWith("/user/add") ? 1 : 0;
+  const base = "/mechanic";
+  const value = pathname.startsWith(`${base}/history`) ? 1 : 0;
+
+  const handleChange = (e, newValue) => {
+    const next = newValue === 1 ? `${base}/history` : `${base}/news`;
+    if (next !== pathname) navigate(next);
+  };
 
   return (
-    <Box
-      sx={{
-        width: "100%",
-        bgcolor: "action.hover",
-        borderRadius: 3,
-        p: 0.5,
-      }}
-    >
-      <Tabs
-        value={value}
-        onChange={(e, v) => navigate(v === 1 ? "/user/add" : "/user")}
-        variant="fullWidth"
-        TabIndicatorProps={{ style: { display: "none" } }}
-        sx={{
-          minHeight: 40,
-          "& .MuiTab-root": {
-            minHeight: 40,
-            textTransform: "none",
-            fontWeight: 700,
-            borderRadius: 2.5,
-          },
-          "& .Mui-selected": {
-            bgcolor: "background.paper",
-            boxShadow: 1,
-          },
-        }}
-      >
-        <Tab label="主页" />
-        <Tab label="新建" />
+    <Box sx={{ width: "100%" }}>
+      <Tabs value={value} onChange={handleChange} variant="fullWidth">
+        <Tab label="新工单" />
+        <Tab label="历史工单" />
       </Tabs>
+      <Divider />
     </Box>
   );
 }

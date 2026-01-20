@@ -88,10 +88,10 @@ export default function Login() {
                   variant="h6"
                   sx={{ fontWeight: 800, lineHeight: 1.1 }}
                 >
-                  登录
+                  维修工单系统
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.7 }}>
-                  进入工单系统
+                  登录
                 </Typography>
               </Box>
             </Box>
@@ -116,7 +116,8 @@ export default function Login() {
                 fullWidth
               />
 
-              <Box
+              {/* 记住我和忘记密码 */}
+              {/* <Box
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -136,7 +137,7 @@ export default function Login() {
                 >
                   ?忘记密码
                 </Button>
-              </Box>
+              </Box> */}
 
               <Button
                 variant="contained"
@@ -150,7 +151,8 @@ export default function Login() {
                 登录
               </Button>
 
-              <Typography
+              {/* 注册 */}
+              {/* <Typography
                 variant="body2"
                 sx={{ textAlign: "center", opacity: 0.75 }}
               >
@@ -162,7 +164,7 @@ export default function Login() {
                 >
                   去注册
                 </Button>
-              </Typography>
+              </Typography> */}
             </Box>
           </CardContent>
         </Card>

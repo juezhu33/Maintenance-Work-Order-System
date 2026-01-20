@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Divider,
+  Fab,
   IconButton,
   ImageList,
   ImageListItem,
@@ -16,22 +17,42 @@ import CloseIcon from "@mui/icons-material/Close";
 import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import { useNavigate } from "react-router-dom";
+import { useRef, useState } from "react";
+import { apiAddWorkOrder } from "../../services/apiAddWorkOrder";
+import AddIcon from "@mui/icons-material/Add";
 
 function pickImages(fileList) {
   if (!fileList || fileList.length === 0) return [];
   return Array.from(fileList).filter((f) => f && f.type?.startsWith("image/"));
 }
 
+function hasText(s) {
+  return typeof s === "string" && s.trim().length > 0;
+}
+
 export default function AddWorkOrder() {
   const navigate = useNavigate();
 
-  const [title, setTitle] = React.useState("");
-  const [desc, setDesc] = React.useState("");
-  const [images, setImages] = React.useState([]);
+  const [title, setTitle] = useState("");
+  const [desc, setDesc] = useState("");
+  const [images, setImages] = useState([]);
+  const [location, setLocation] = useState("");
 
-  const cameraInputRef = React.useRef(null);
-  const fileInputRef = React.useRef(null);
-  const imagesRef = React.useRef([]);
+  const [touched, setTouched] = useState({
+    title: false,
+    location: false,
+    images: false,
+  });
+
+  const cameraInputRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const imagesRef = useRef([]);
+
+  const titleOk = hasText(title);
+  const locationOk = hasText(location);
+  const imagesOk = images.length > 0;
+
+  const canSubmit = titleOk && locationOk && imagesOk;
 
   function openCamera() {
     cameraInputRef.current?.click();
@@ -55,6 +76,8 @@ export default function AddWorkOrder() {
       imagesRef.current = next;
       return next;
     });
+
+    setTouched((t) => ({ ...t, images: true }));
   }
 
   function onCameraChange(e) {
@@ -74,6 +97,7 @@ export default function AddWorkOrder() {
       imagesRef.current = next;
       return next;
     });
+    setTouched((t) => ({ ...t, images: true }));
   }
 
   React.useEffect(() => {
@@ -84,9 +108,18 @@ export default function AddWorkOrder() {
     };
   }, []);
 
-  function handleSubmit() {
-    // TODO: 你接 Supabase
-    // title, desc, images (File)
+  async function handleSubmit() {
+    // 提交前再兜底一次
+    setTouched({ title: true, location: true, images: true });
+    if (!canSubmit) return;
+
+    await apiAddWorkOrder({
+      title: title.trim(),
+      desc: desc.trim(),
+      location: location.trim(),
+      files: images.map((x) => x.file),
+    });
+    navigate("/user");
   }
 
   return (
@@ -103,16 +136,28 @@ export default function AddWorkOrder() {
       <Paper variant="outlined" sx={{ borderRadius: 3, p: 1.5 }}>
         <Stack spacing={2}>
           <TextField
-            label="问题标题"
+            label="问题标题*"
             placeholder="一句话说明问题"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            onBlur={() => setTouched((t) => ({ ...t, title: true }))}
+            error={touched.title && !titleOk}
+            fullWidth
+          />
+
+          <TextField
+            label="位置*"
+            placeholder="尽可能详细地填写故障位置"
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            onBlur={() => setTouched((t) => ({ ...t, location: true }))}
+            error={touched.location && !locationOk}
             fullWidth
           />
 
           <TextField
             label="详细描述"
-            placeholder="补充说明，可选"
+            placeholder="补充详细信息,如故障现象等"
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
             fullWidth
@@ -123,12 +168,16 @@ export default function AddWorkOrder() {
           <Divider />
 
           <Stack spacing={1}>
-            <Typography sx={{ fontWeight: 800 }}>图片</Typography>
+            <Typography sx={{ fontWeight: 800 }}>图片*</Typography>
+
             <Stack direction="row" spacing={1}>
               <Button
                 variant="outlined"
                 startIcon={<PhotoCameraOutlinedIcon />}
-                onClick={openCamera}
+                onClick={() => {
+                  setTouched((t) => ({ ...t, images: true }));
+                  openCamera();
+                }}
                 sx={{ borderRadius: 2 }}
               >
                 拍照
@@ -136,12 +185,21 @@ export default function AddWorkOrder() {
               <Button
                 variant="outlined"
                 startIcon={<UploadFileOutlinedIcon />}
-                onClick={openFiles}
+                onClick={() => {
+                  setTouched((t) => ({ ...t, images: true }));
+                  openFiles();
+                }}
                 sx={{ borderRadius: 2 }}
               >
                 上传
               </Button>
             </Stack>
+
+            {touched.images && !imagesOk && (
+              <Typography variant="body2" sx={{ color: "error.main" }}>
+                请至少上传 1 张图片
+              </Typography>
+            )}
 
             <input
               ref={cameraInputRef}
@@ -213,7 +271,6 @@ export default function AddWorkOrder() {
         </Stack>
       </Paper>
 
-      {/* 底部提交栏 */}
       <Box
         sx={{
           position: "fixed",
@@ -227,19 +284,45 @@ export default function AddWorkOrder() {
           py: 1.25,
         }}
       >
+        {!canSubmit && (
+          <Typography
+            variant="caption"
+            sx={{
+              opacity: 0.7,
+              display: "block",
+              mt: 0.5,
+              textAlign: "center",
+            }}
+          >
+            需要填写标题，位置，并至少上传 1 张图片
+          </Typography>
+        )}
         <Button
           fullWidth
           variant="contained"
           size="large"
           sx={{ borderRadius: 2 }}
           onClick={handleSubmit}
+          disabled={!canSubmit}
         >
           提交
         </Button>
       </Box>
 
-      {/* 给内容留出底部栏空间 */}
-      <Box sx={{ height: 72 }} />
+      <Box sx={{ height: 88 }} />
+      <Fab
+        color="primary"
+        aria-label="add"
+        sx={{
+          position: "fixed",
+          right: 35,
+          bottom: 60,
+          zIndex: 100,
+        }}
+        onClick={() => navigate("/user")}
+      >
+        {"←"}
+      </Fab>
     </Box>
   );
 }
