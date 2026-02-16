@@ -25,7 +25,9 @@ export async function apiWorkOrderDetail(id) {
 
   const { data, error } = await supabase
     .from("tickets")
-    .select("id,title,status,location,created_at,updated_at,desc,images")
+    .select(
+      "id,title,status,priority,location,created_at,updated_at,desc,images,assignee_name",
+    )
     .eq("id", id)
     .maybeSingle();
   // select + filter 的用法见文档:contentReference[oaicite:2]{index=2}
@@ -37,10 +39,12 @@ export async function apiWorkOrderDetail(id) {
     id: data.id,
     title: data.title,
     status: data.status,
+    priority: data.priority,
     location: data.location,
     createdAt: data.created_at, // 提交时间
     updatedAt: data.updated_at, // 更新时间
     desc: data.desc,
     images: Array.isArray(data.images) ? data.images : [],
+    assigneeName: data.assignee_name,
   };
 }

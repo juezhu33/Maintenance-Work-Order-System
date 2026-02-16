@@ -3,52 +3,54 @@ import {
   Button,
   Card,
   CardContent,
-  Checkbox,
   CssBaseline,
-  FormControlLabel,
   TextField,
   Typography,
 } from "@mui/material";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import { useState } from "react";
-import apiLogin from "../../services/apiLogin";
 import { useNavigate, Link } from "react-router-dom";
+import apiRegister from "../../services/apiRegister";
 import { translateError } from "../../utils/errorMessages";
 
-export default function Login() {
+export default function Register() {
   const navigate = useNavigate();
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleLogin() {
-    if (!account.trim() || !password) {
-      setError("请输入账号和密码");
+  async function handleRegister() {
+    setError("");
+
+    if (!account.trim() || !password || !fullName.trim()) {
+      setError("请填写完整信息");
       return;
     }
-    setError("");
-    setLoading(true);
 
-    const { error: loginErr, role } = await apiLogin(account, password);
+    if (password !== confirmPassword) {
+      setError("两次密码不一致");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("密码至少6位");
+      return;
+    }
+
+    setLoading(true);
+    const { error: regError } = await apiRegister(account, password, fullName);
     setLoading(false);
 
-    if (loginErr) {
-      setError(translateError(loginErr.message));
+    if (regError) {
+      setError(translateError(regError.message));
       return;
     }
-    if (role === "user") {
-      navigate("/user");
-      return;
-    }
-    if (role === "admin") {
-      navigate("/admin");
-      return;
-    }
-    if (role === "mechanic") {
-      navigate("/mechanic");
-      return;
-    }
+
+    // 注册成功，跳转登录页
+    navigate("/login", { state: { message: "注册成功，请登录" } });
   }
 
   return (
@@ -90,7 +92,7 @@ export default function Login() {
                   flex: "0 0 auto",
                 }}
               >
-                <LockOutlinedIcon />
+                <PersonAddIcon />
               </Box>
 
               <Box>
@@ -101,15 +103,15 @@ export default function Login() {
                   维修工单系统
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.7 }}>
-                  登录
+                  注册
                 </Typography>
               </Box>
             </Box>
 
             <Box sx={{ display: "grid", gap: 2 }}>
               <TextField
-                label="账号"
-                placeholder="学号 / 工号 / 邮箱"
+                label="学号"
+                placeholder="请输入学号"
                 autoComplete="username"
                 fullWidth
                 value={account}
@@ -117,37 +119,32 @@ export default function Login() {
               />
 
               <TextField
+                label="姓名"
+                placeholder="请输入姓名"
+                fullWidth
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+              />
+
+              <TextField
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 label="密码"
-                placeholder="请输入密码"
+                placeholder="请输入密码（至少6位）"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 fullWidth
               />
 
-              {/* 记住我和忘记密码 */}
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 1,
-                }}
-              >
-                <FormControlLabel
-                  control={<Checkbox />}
-                  label={<Typography variant="body2">记住我</Typography>}
-                />
-
-                {/* <Button
-                  size="small"
-                  variant="text"
-                  sx={{ textTransform: "none" }}
-                >
-                  ?忘记密码
-                </Button> */}
-              </Box>
+              <TextField
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                label="确认密码"
+                placeholder="请再次输入密码"
+                type="password"
+                autoComplete="new-password"
+                fullWidth
+              />
 
               {error && (
                 <Typography variant="body2" sx={{ color: "error.main" }}>
@@ -160,26 +157,25 @@ export default function Login() {
                 size="large"
                 fullWidth
                 sx={{ borderRadius: 2 }}
-                onClick={handleLogin}
+                onClick={handleRegister}
                 disabled={loading}
               >
-                {loading ? "登录中..." : "登录"}
+                {loading ? "注册中..." : "注册"}
               </Button>
 
-              {/* 注册 */}
               <Typography
                 variant="body2"
                 sx={{ textAlign: "center", opacity: 0.75 }}
               >
-                还没有账号？
+                已有账号？
                 <Button
                   component={Link}
-                  to="/register"
+                  to="/login"
                   variant="text"
                   size="small"
                   sx={{ textTransform: "none" }}
                 >
-                  去注册
+                  去登录
                 </Button>
               </Typography>
             </Box>

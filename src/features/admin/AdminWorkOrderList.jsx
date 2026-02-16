@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
@@ -12,48 +12,76 @@ import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
-
-const rows = [
-  {
-    id: "1001",
-    title: "宿舍灯坏了",
-    status: "open",
-    priority: "medium",
-    updatedAt: "2026-01-20 10:21",
-  },
-  {
-    id: "1002",
-    title: "水龙头漏水",
-    status: "in_progress",
-    priority: "high",
-    updatedAt: "2026-01-20 09:12",
-  },
-  {
-    id: "1003",
-    title: "门锁卡住",
-    status: "closed",
-    priority: "low",
-    updatedAt: "2026-01-19 16:40",
-  },
-];
+import CircularProgress from "@mui/material/CircularProgress";
+import { apiGetAllWorkOrders } from "../../services/apiAdmin";
+import { useTicketsRealtime } from "../../hooks/useTicketsRealtime";
+import PriorityChip from "../../ui/PriorityChip";
 
 function statusChip(status) {
   if (status === "open") return <Chip size="small" label="待处理" />;
   if (status === "in_progress")
     return <Chip size="small" label="处理中" color="warning" />;
-  return <Chip size="small" label="已完成" color="success" />;
+  if (status === "done")
+    return <Chip size="small" label="已完成" color="success" />;
+  if (status === "cancel") return <Chip size="small" label="已取消" />;
+  return <Chip size="small" label={status} />;
+}
+
+function formatTime(iso) {
+  if (!iso) return "";
+  return iso.slice(0, 16).replace("T", " ");
 }
 
 export default function AdminWorkOrderList() {
-  const [q, setQ] = React.useState("");
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+  const [q, setQ] = useState("");
 
-  const filtered = React.useMemo(() => {
+  const fetchData = useCallback(async () => {
+    try {
+      const data = await apiGetAllWorkOrders();
+      setList(data);
+      setErr("");
+    } catch (e) {
+      setErr(e?.message || "加载失败");
+    }
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchData().finally(() => setLoading(false));
+  }, [fetchData]);
+
+  // 实时刷新
+  useTicketsRealtime(fetchData);
+
+  const filtered = useMemo(() => {
     const kw = q.trim().toLowerCase();
-    if (!kw) return rows;
-    return rows.filter(
-      (r) => r.title.toLowerCase().includes(kw) || r.id.includes(kw),
+    if (!kw) return list;
+    return list.filter(
+      (r) =>
+        r.title?.toLowerCase().includes(kw) || r.id?.toLowerCase().includes(kw),
     );
-  }, [q]);
+  }, [q, list]);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (err) {
+    return (
+      <Box>
+        <Typography variant="body2" sx={{ color: "error.main" }}>
+          {err}
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -68,7 +96,7 @@ export default function AdminWorkOrderList() {
             工单列表
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.7 }}>
-            简单管理全部工单
+            管理全部工单
           </Typography>
         </Box>
 
@@ -79,9 +107,6 @@ export default function AdminWorkOrderList() {
             onChange={(e) => setQ(e.target.value)}
             placeholder="搜索 id 或标题"
           />
-          <Button variant="contained" onClick={() => {}}>
-            新建
-          </Button>
         </Stack>
       </Stack>
 
@@ -91,6 +116,7 @@ export default function AdminWorkOrderList() {
             <TableRow>
               <TableCell sx={{ fontWeight: 700 }}>ID</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>标题</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>报修人</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>状态</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>优先级</TableCell>
               <TableCell sx={{ fontWeight: 700 }}>更新时间</TableCell>
@@ -101,11 +127,14 @@ export default function AdminWorkOrderList() {
           <TableBody>
             {filtered.map((r) => (
               <TableRow key={r.id} hover>
-                <TableCell>{r.id}</TableCell>
+                <TableCell>{r.id?.slice(0, 8)}</TableCell>
                 <TableCell>{r.title}</TableCell>
+                <TableCell>{r.reporterName || "-"}</TableCell>
                 <TableCell>{statusChip(r.status)}</TableCell>
-                <TableCell>{r.priority}</TableCell>
-                <TableCell>{r.updatedAt}</TableCell>
+                <TableCell>
+                  <PriorityChip priority={r.priority} />
+                </TableCell>
+                <TableCell>{formatTime(r.updatedAt || r.createdAt)}</TableCell>
                 <TableCell>
                   <Button
                     size="small"

@@ -1,7 +1,9 @@
-import * as React from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Chip,
+  CircularProgress,
   Paper,
   Stack,
   Typography,
@@ -9,45 +11,71 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from "@mui/material";
-
-const demo = [
-  {
-    id: "h-2001",
-    title: "空调不制冷",
-    location: "3号楼 215",
-    status: "done",
-    finishedAt: "今天 12:03",
-  },
-  {
-    id: "h-2002",
-    title: "卫生间堵塞",
-    location: "2号楼 511",
-    status: "done",
-    finishedAt: "昨天 19:20",
-  },
-  {
-    id: "h-2003",
-    title: "插座没电",
-    location: "教学楼 B201",
-    status: "cancel",
-    finishedAt: "前天 14:11",
-  },
-];
+import { apiGetMechanicHistory } from "../../services/apiMechanic";
+import { useTicketsRealtime } from "../../hooks/useTicketsRealtime";
+import PriorityChip from "../../ui/PriorityChip";
 
 function StatusChip({ value }) {
+  if (value === "in_progress")
+    return <Chip size="small" label="处理中" color="warning" />;
   if (value === "done")
     return <Chip size="small" label="已完成" color="success" />;
   if (value === "cancel") return <Chip size="small" label="已取消" />;
-  return <Chip size="small" label="处理中" color="warning" />;
+  return <Chip size="small" label={value} />;
+}
+
+function formatTime(iso) {
+  if (!iso) return "";
+  return iso.slice(0, 16).replace("T", " ");
 }
 
 export default function WorkOrderHistory() {
-  const [filter, setFilter] = React.useState("all");
+  const navigate = useNavigate();
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+  const [filter, setFilter] = useState("all");
 
-  const filtered = React.useMemo(() => {
-    if (filter === "all") return demo;
-    return demo.filter((x) => x.status === filter);
-  }, [filter]);
+  const fetchData = useCallback(async () => {
+    try {
+      const data = await apiGetMechanicHistory();
+      setList(data);
+      setErr("");
+    } catch (e) {
+      setErr(e?.message || "加载失败");
+    }
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchData().finally(() => setLoading(false));
+  }, [fetchData]);
+
+  // 实时刷新
+  useTicketsRealtime(fetchData);
+
+  const filtered = useMemo(() => {
+    if (filter === "all") return list;
+    return list.filter((x) => x.status === filter);
+  }, [filter, list]);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (err) {
+    return (
+      <Box>
+        <Typography variant="body2" sx={{ color: "error.main" }}>
+          {err}
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -59,10 +87,10 @@ export default function WorkOrderHistory() {
       >
         <Box>
           <Typography sx={{ fontWeight: 900, fontSize: 18 }}>
-            历史工单
+            我的工单
           </Typography>
           <Typography variant="body2" sx={{ opacity: 0.7 }}>
-            我的处理记录
+            已接单的工单列表
           </Typography>
         </Box>
         <Chip size="small" label={`共 ${filtered.length} 条`} />
@@ -76,8 +104,8 @@ export default function WorkOrderHistory() {
         sx={{ mb: 1.5 }}
       >
         <ToggleButton value="all">全部</ToggleButton>
+        <ToggleButton value="in_progress">处理中</ToggleButton>
         <ToggleButton value="done">已完成</ToggleButton>
-        <ToggleButton value="cancel">已取消</ToggleButton>
       </ToggleButtonGroup>
 
       <Stack spacing={1.5}>
@@ -88,7 +116,9 @@ export default function WorkOrderHistory() {
             sx={{
               borderRadius: 3,
               p: 1.5,
+              cursor: "pointer",
             }}
+            onClick={() => navigate(`/mechanic/detail/${item.id}`)}
           >
             <Stack spacing={1}>
               <Stack
@@ -100,7 +130,10 @@ export default function WorkOrderHistory() {
                 <Typography sx={{ fontWeight: 800 }} noWrap>
                   {item.title}
                 </Typography>
-                <StatusChip value={item.status} />
+                <Stack direction="row" spacing={0.5}>
+                  <StatusChip value={item.status} />
+                  <PriorityChip priority={item.priority} />
+                </Stack>
               </Stack>
 
               <Typography variant="body2" sx={{ opacity: 0.8 }}>
@@ -109,8 +142,16 @@ export default function WorkOrderHistory() {
 
               <Divider />
 
-              <Typography variant="body2" sx={{ opacity: 0.75 }}>
-                结束时间：{item.finishedAt}
+              {item.desc && (
+                <Typography variant="body2" sx={{ opacity: 0.85 }} noWrap>
+                  {item.desc}
+                </Typography>
+              )}
+
+              <Typography variant="body2" sx={{ opacity: 0.6, fontSize: 12 }}>
+                {item.status === "in_progress"
+                  ? `接单时间：${formatTime(item.createdAt)}`
+                  : `结束时间：${formatTime(item.finishedAt)}`}
               </Typography>
             </Stack>
           </Paper>

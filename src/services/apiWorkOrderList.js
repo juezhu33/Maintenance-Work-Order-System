@@ -18,8 +18,10 @@ export async function apiWorkOrderList({
 
   let q = supabase
     .from("tickets")
-    .select("id,title,location,status,created_at,desc")
-    .eq("reporter_id", user.id);
+    .select("id,title,location,status,priority,created_at,desc");
+
+  // 注意：如果需要只显示当前用户的工单，取消下面这行的注释
+  // q = q.eq("reporter_id", user.id);
 
   if (Array.isArray(statusIn) && statusIn.length) {
     q = q.in("status", statusIn);
@@ -42,6 +44,7 @@ export async function apiWorkOrderList({
     title: t.title,
     location: t.location,
     status: t.status,
+    priority: t.priority,
     time: t.created_at, // 提交时间
     desc: t.desc,
   }));

@@ -1,8 +1,10 @@
 import Box from "@mui/material/Box";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
-import Divider from "@mui/material/Divider";
+import IconButton from "@mui/material/IconButton";
+import LogoutIcon from "@mui/icons-material/Logout";
 import { useLocation, useNavigate } from "react-router-dom";
+import { logout } from "../utils/auth";
 
 export default function MechanicNavBar() {
   const navigate = useNavigate();
@@ -16,13 +18,20 @@ export default function MechanicNavBar() {
     if (next !== pathname) navigate(next);
   };
 
+  async function handleLogout() {
+    await logout();
+    navigate("/login");
+  }
+
   return (
-    <Box sx={{ width: "100%" }}>
-      <Tabs value={value} onChange={handleChange} variant="fullWidth">
+    <Box sx={{ width: "100%", display: "flex", alignItems: "center" }}>
+      <Tabs value={value} onChange={handleChange} sx={{ flex: 1 }}>
         <Tab label="新工单" />
         <Tab label="历史工单" />
       </Tabs>
-      <Divider />
+      <IconButton onClick={handleLogout} size="small" title="退出登录">
+        <LogoutIcon fontSize="small" />
+      </IconButton>
     </Box>
   );
 }

@@ -1,50 +1,65 @@
-import * as React from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Button,
   Chip,
+  CircularProgress,
   Paper,
   Stack,
   Typography,
   Divider,
+  Snackbar,
 } from "@mui/material";
+import {
+  apiGetNewWorkOrders,
+  apiClaimWorkOrder,
+} from "../../services/apiMechanic";
+import { useTicketsRealtime } from "../../hooks/useTicketsRealtime";
+import PriorityChip from "../../ui/PriorityChip";
 
-const demo = [
-  {
-    id: "n-1001",
-    title: "宿舍灯坏了",
-    location: "1号楼 402",
-    desc: "晚上突然不亮，可能灯管坏了。",
-    createdAt: "10:21",
-    priority: "high",
-  },
-  {
-    id: "n-1002",
-    title: "水龙头漏水",
-    location: "2号楼 106",
-    desc: "一开水就滴，地面已经湿了。",
-    createdAt: "09:12",
-    priority: "medium",
-  },
-  {
-    id: "n-1003",
-    title: "门锁卡住",
-    location: "实验楼 303",
-    desc: "钥匙能插进去，但转不动。",
-    createdAt: "昨天 16:40",
-    priority: "low",
-  },
-];
-
-function PriorityChip({ value }) {
-  if (value === "high")
-    return <Chip size="small" label="高优先" color="error" />;
-  if (value === "medium")
-    return <Chip size="small" label="中优先" color="warning" />;
-  return <Chip size="small" label="低优先" />;
+function formatTime(iso) {
+  if (!iso) return "";
+  return iso.slice(0, 16).replace("T", " ");
 }
 
 export default function NewWorkOrder() {
+  const navigate = useNavigate();
+  const [list, setList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [snack, setSnack] = useState("");
+  const [claiming, setClaiming] = useState("");
+
+  const fetchData = useCallback(async () => {
+    try {
+      const data = await apiGetNewWorkOrders();
+      setList(data);
+    } catch (e) {
+      setSnack("加载失败");
+    }
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchData().finally(() => setLoading(false));
+  }, [fetchData]);
+
+  // 实时刷新
+  useTicketsRealtime(fetchData);
+
+  async function handleClaim(id) {
+    setClaiming(id);
+    try {
+      await apiClaimWorkOrder(id);
+      setSnack("接单成功");
+      setList((prev) => prev.filter((x) => x.id !== id));
+    } catch (e) {
+      setSnack("接单失败");
+    } finally {
+      setClaiming("");
+    }
+  }
+
   return (
     <Box>
       <Stack
@@ -59,54 +74,79 @@ export default function NewWorkOrder() {
             待接单列表
           </Typography>
         </Box>
-        <Chip size="small" label={`共 ${demo.length} 条`} />
+        <Chip size="small" label={`共 ${list.length} 条`} />
       </Stack>
 
-      <Stack spacing={1.5}>
-        {demo.map((item) => (
-          <Paper
-            key={item.id}
-            variant="outlined"
-            sx={{
-              borderRadius: 3,
-              p: 1.5,
-            }}
-          >
-            <Stack spacing={1}>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                spacing={1}
-              >
-                <Typography sx={{ fontWeight: 800 }} noWrap>
-                  {item.title}
+      {loading ? (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Stack spacing={1.5}>
+          {list.map((item) => (
+            <Paper
+              key={item.id}
+              variant="outlined"
+              sx={{ borderRadius: 3, p: 1.5 }}
+            >
+              <Stack spacing={1}>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  spacing={1}
+                >
+                  <Typography sx={{ fontWeight: 800 }} noWrap>
+                    {item.title}
+                  </Typography>
+                  <PriorityChip priority={item.priority} />
+                </Stack>
+
+                <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                  {item.location} · {formatTime(item.createdAt)}
                 </Typography>
-                <PriorityChip value={item.priority} />
+
+                <Typography variant="body2" sx={{ opacity: 0.85 }}>
+                  {item.desc}
+                </Typography>
+
+                <Divider />
+
+                <Stack direction="row" spacing={1} justifyContent="flex-end">
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => navigate(`/mechanic/detail/${item.id}`)}
+                  >
+                    查看详情
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="contained"
+                    disabled={claiming === item.id}
+                    onClick={() => handleClaim(item.id)}
+                  >
+                    {claiming === item.id ? "接单中..." : "接单"}
+                  </Button>
+                </Stack>
               </Stack>
-
-              <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                {item.location} · {item.createdAt}
+            </Paper>
+          ))}
+          {list.length === 0 && (
+            <Paper variant="outlined" sx={{ borderRadius: 3, p: 2 }}>
+              <Typography variant="body2" sx={{ opacity: 0.7 }}>
+                暂无待接单工单
               </Typography>
-
-              <Typography variant="body2" sx={{ opacity: 0.85 }}>
-                {item.desc}
-              </Typography>
-
-              <Divider />
-
-              <Stack direction="row" spacing={1} justifyContent="flex-end">
-                <Button size="small" variant="outlined" onClick={() => {}}>
-                  忽略
-                </Button>
-                <Button size="small" variant="contained" onClick={() => {}}>
-                  接单
-                </Button>
-              </Stack>
-            </Stack>
-          </Paper>
-        ))}
-      </Stack>
+            </Paper>
+          )}
+        </Stack>
+      )}
+      <Snackbar
+        open={!!snack}
+        autoHideDuration={2000}
+        onClose={() => setSnack("")}
+        message={snack}
+      />
     </Box>
   );
 }

@@ -11,16 +11,19 @@ import {
   Stack,
   TextField,
   Typography,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import CloseIcon from "@mui/icons-material/Close";
 import PhotoCameraOutlinedIcon from "@mui/icons-material/PhotoCameraOutlined";
 import UploadFileOutlinedIcon from "@mui/icons-material/UploadFileOutlined";
 import { useNavigate } from "react-router-dom";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { apiAddWorkOrder } from "../../services/apiAddWorkOrder";
 
 const MAX_IMAGES = 6;
+const STORAGE_KEY = "addWorkOrder_draft";
 
 function pickImages(fileList) {
   if (!fileList || fileList.length === 0) return [];
@@ -38,13 +41,39 @@ function hasText(s) {
   return typeof s === "string" && s.trim().length > 0;
 }
 
+// 从 sessionStorage 读取草稿
+function loadDraft() {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+}
+
+// 保存草稿到 sessionStorage
+function saveDraft(data) {
+  try {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {}
+}
+
+// 清除草稿
+function clearDraft() {
+  try {
+    sessionStorage.removeItem(STORAGE_KEY);
+  } catch {}
+}
+
 export default function AddWorkOrder() {
   const navigate = useNavigate();
 
-  const [title, setTitle] = useState("");
-  const [desc, setDesc] = useState("");
+  // 从草稿恢复初始值
+  const draft = loadDraft();
+  const [title, setTitle] = useState(draft?.title || "");
+  const [desc, setDesc] = useState(draft?.desc || "");
   const [images, setImages] = useState([]);
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState(draft?.location || "");
+  const [priority, setPriority] = useState(draft?.priority || "medium");
 
   const [touched, setTouched] = useState({
     title: false,
@@ -58,6 +87,11 @@ export default function AddWorkOrder() {
   const cameraInputRef = useRef(null);
   const fileInputRef = useRef(null);
   const imagesRef = useRef([]);
+
+  // 自动保存草稿（文本字段）
+  useEffect(() => {
+    saveDraft({ title, desc, location, priority });
+  }, [title, desc, location, priority]);
 
   const titleOk = hasText(title);
   const locationOk = hasText(location);
@@ -134,8 +168,10 @@ export default function AddWorkOrder() {
         title: title.trim(),
         desc: desc.trim(),
         location: location.trim(),
+        priority,
         files: images.map((x) => x.file),
       });
+      clearDraft(); // 提交成功后清除草稿
       navigate("/user");
     } catch (e) {
       setSubmitErr(e?.message || "提交失败");
@@ -178,7 +214,7 @@ export default function AddWorkOrder() {
 
           <TextField
             label="位置*"
-            placeholder="尽可能详细地填写故障位置"
+            placeholder="例：A区/教室/具体位置"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
             onBlur={() => setTouched((t) => ({ ...t, location: true }))}
@@ -197,6 +233,28 @@ export default function AddWorkOrder() {
             minRows={4}
             disabled={submitting}
           />
+
+          <Box>
+            <Typography sx={{ fontWeight: 800, mb: 1 }}>紧急程度</Typography>
+            <ToggleButtonGroup
+              value={priority}
+              exclusive
+              onChange={(e, val) => val && setPriority(val)}
+              disabled={submitting}
+              fullWidth
+              size="small"
+            >
+              <ToggleButton value="low" sx={{ flex: 1 }}>
+                低
+              </ToggleButton>
+              <ToggleButton value="medium" sx={{ flex: 1 }}>
+                一般
+              </ToggleButton>
+              <ToggleButton value="high" sx={{ flex: 1, color: "error.main" }}>
+                紧急
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
 
           <Divider />
 

@@ -7,6 +7,7 @@ import IconButton from "@mui/material/IconButton";
 import Divider from "@mui/material/Divider";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { Box, Chip } from "@mui/material";
+import PriorityChip from "../../ui/PriorityChip";
 
 function StatusChip({ status }) {
   if (status === "open") return <Chip size="small" label="待处理" />;
@@ -47,6 +48,7 @@ function WorkOrderItem({ list }) {
                 </Typography>
                 <Stack direction="row" spacing={1} alignItems="center">
                   <StatusChip status={w.status} />
+                  <PriorityChip priority={w.priority} />
                   <IconButton size="small" aria-label="go">
                     <ChevronRightIcon fontSize="small" />
                   </IconButton>

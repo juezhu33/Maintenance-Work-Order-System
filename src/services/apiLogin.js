@@ -1,9 +1,12 @@
 import supabase from "../utils/supabase";
+import { toEmail } from "../utils/account";
 
 export default async function apiLogin(account, password) {
+  const email = toEmail(account.trim());
+
   const { data: authData, error: authError } =
     await supabase.auth.signInWithPassword({
-      email: account,
+      email,
       password: password,
     });
 

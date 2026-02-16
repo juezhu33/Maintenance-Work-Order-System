@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   Box,
   Chip,
+  CircularProgress,
   Divider,
   IconButton,
   Paper,
@@ -11,6 +12,8 @@ import {
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import { useNavigate, useParams } from "react-router-dom";
 import { apiWorkOrderDetail } from "../../services/apiWorkOrderDetail";
+import ImageGallery from "../../ui/ImageGallery";
+import PriorityChip from "../../ui/PriorityChip";
 
 function StatusChip({ status }) {
   if (status === "open") return <Chip size="small" label="待处理" />;
@@ -91,7 +94,12 @@ export default function WorkOrderDetail() {
     };
   }, [id]);
 
-  if (loading) return <Typography variant="body2">加载中...</Typography>;
+  if (loading)
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
   if (err) return <Typography color="error">{err}</Typography>;
   if (!demo) return <Typography variant="body2">工单不存在</Typography>;
 
@@ -120,7 +128,10 @@ export default function WorkOrderDetail() {
             <Typography sx={{ fontWeight: 900 }} noWrap>
               {demo.title}
             </Typography>
-            <StatusChip status={demo.status} />
+            <Stack direction="row" spacing={0.5}>
+              <StatusChip status={demo.status} />
+              <PriorityChip priority={demo.priority} />
+            </Stack>
           </Stack>
 
           <Typography variant="body2" sx={{ opacity: 0.8 }}>
@@ -139,6 +150,7 @@ export default function WorkOrderDetail() {
         <Typography sx={{ fontWeight: 900, mb: 1 }}>信息</Typography>
         <Stack spacing={1}>
           <Row label="工单编号" value={shortId(demo.id)} title={demo.id} />
+          <Row label="处理人" value={demo.assigneeName || "待分配"} />
           <Row label="提交时间" value={formatTimeShort(demo.createdAt)} />
           {showUpdated && (
             <Row label="更新时间" value={formatTimeShort(demo.updatedAt)} />
@@ -149,40 +161,7 @@ export default function WorkOrderDetail() {
 
         <Typography sx={{ fontWeight: 900, mb: 1 }}>图片</Typography>
 
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 1,
-          }}
-        >
-          {(imgs.length ? imgs : []).map((url, i) =>
-            url ? (
-              <Box
-                key={i}
-                component="img"
-                src={url}
-                alt={`ticket-${demo.id}-${i}`}
-                sx={{
-                  width: "100%",
-                  aspectRatio: "1/1",
-                  objectFit: "cover",
-                  borderRadius: 2,
-                  bgcolor: "action.hover",
-                }}
-              />
-            ) : (
-              <Box
-                key={i}
-                sx={{
-                  aspectRatio: "1/1",
-                  bgcolor: "action.hover",
-                  borderRadius: 2,
-                }}
-              />
-            ),
-          )}
-        </Box>
+        <ImageGallery images={imgs} columns={3} />
       </Paper>
     </Box>
   );
